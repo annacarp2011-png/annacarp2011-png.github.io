@@ -1,1 +1,810 @@
-Hello world
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mobley Helms Systems — Seed Round 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #03060f;
+  --surface: #080d1a;
+  --accent: #4fc3f7;
+  --accent2: #00e5ff;
+  --accent3: #7c4dff;
+  --green: #2d9b6b;
+  --green-dim: rgba(45,155,107,0.15);
+  --red: #c0544a;
+  --red-dim: rgba(192,84,74,0.12);
+  --gold: #d4af37;
+  --gold-dim: rgba(212,175,55,0.1);
+  --text: #e8f4fd;
+  --muted: #8bacc0;
+  --faint: #1a2744;
+  --serif: 'Cormorant Garamond', Georgia, serif;
+  --mono: 'DM Mono', monospace;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--text); font-family: var(--serif); overflow-x: hidden; }
+
+#fractal-canvas { position: fixed; top:0; left:0; width:100%; height:100%; z-index:0; opacity:0.32; pointer-events:none; }
+.fluid-blob { position:fixed; border-radius:50%; filter:blur(90px); pointer-events:none; z-index:0; mix-blend-mode:screen; animation:blobFloat 24s ease-in-out infinite; }
+.blob1 { width:600px; height:600px; background:radial-gradient(circle,rgba(79,195,247,0.13),transparent 70%); top:-200px; left:-200px; animation-duration:26s; }
+.blob2 { width:800px; height:800px; background:radial-gradient(circle,rgba(124,77,255,0.1),transparent 70%); top:30vh; right:-300px; animation-duration:32s; animation-delay:-9s; }
+.blob3 { width:500px; height:500px; background:radial-gradient(circle,rgba(0,229,255,0.08),transparent 70%); bottom:15vh; left:8%; animation-duration:20s; animation-delay:-16s; }
+@keyframes blobFloat { 0%,100%{transform:translate(0,0) scale(1);} 33%{transform:translate(40px,-60px) scale(1.05);} 66%{transform:translate(-30px,40px) scale(0.95);} }
+
+#scroll-progress { position:fixed; top:0; left:0; height:2px; width:0; background:linear-gradient(90deg,var(--accent),var(--accent3)); z-index:200; transition:width 0.1s; }
+
+nav {
+  position:fixed; top:0; left:0; right:0; z-index:100;
+  display:flex; justify-content:space-between; align-items:center;
+  padding:1.2rem 4vw;
+  background:rgba(3,6,15,0.82); backdrop-filter:blur(14px);
+  border-bottom:0.5px solid rgba(79,195,247,0.08);
+}
+.logo { font-family:var(--mono); font-size:10px; letter-spacing:0.22em; color:var(--accent); text-transform:uppercase; }
+.nav-links { display:flex; gap:2rem; list-style:none; }
+.nav-links a { font-family:var(--mono); font-size:9px; letter-spacing:0.16em; text-transform:uppercase; color:var(--muted); text-decoration:none; transition:color 0.2s; }
+.nav-links a:hover { color:var(--accent); }
+.round-badge { font-family:var(--mono); font-size:9px; letter-spacing:0.2em; padding:0.3rem 0.8rem; border:1px solid var(--gold); color:var(--gold); text-transform:uppercase; }
+
+.slide { position:relative; z-index:1; min-height:100vh; display:flex; flex-direction:column; justify-content:center; padding:8rem 9vw 6rem; overflow:hidden; }
+.slide + .slide, .slide + .flow-phrase + .slide { border-top: 0.5px solid rgba(79,195,247,0.07); }
+
+.bg-word { position:absolute; font-family:var(--serif); font-size:clamp(7rem,18vw,16rem); font-weight:300; color:rgba(79,195,247,0.022); pointer-events:none; letter-spacing:-0.05em; line-height:1; user-select:none; z-index:0; }
+
+.fractal-divider { width:100%; height:1px; position:relative; z-index:1; background:linear-gradient(90deg,transparent 0%,rgba(79,195,247,0.25) 30%,rgba(124,77,255,0.25) 70%,transparent 100%); }
+
+.flow-phrase { position:relative; z-index:1; display:flex; align-items:center; justify-content:center; padding:2.5rem 9vw; gap:2rem; background:rgba(8,13,26,0.5); }
+.flow-phrase-line { flex:1; height:1px; background:linear-gradient(90deg,transparent,rgba(79,195,247,0.18)); }
+.flow-phrase-line.r { background:linear-gradient(90deg,rgba(79,195,247,0.18),transparent); }
+.flow-phrase-text { font-family:var(--serif); font-size:clamp(0.85rem,1.8vw,1.1rem); font-style:italic; color:rgba(139,172,192,0.45); letter-spacing:0.06em; white-space:nowrap; }
+
+.slide-num { font-family:var(--mono); font-size:9px; letter-spacing:0.22em; color:var(--muted); text-transform:uppercase; margin-bottom:2.5rem; }
+.slide-num span { color:var(--accent); margin-right:0.5rem; }
+
+.reveal { opacity:0; transform:translateY(28px); transition:opacity 0.85s cubic-bezier(0.16,1,0.3,1), transform 0.85s cubic-bezier(0.16,1,0.3,1); }
+.reveal.visible { opacity:1; transform:none; }
+.d1{transition-delay:0.1s;} .d2{transition-delay:0.22s;} .d3{transition-delay:0.34s;} .d4{transition-delay:0.46s;} .d5{transition-delay:0.58s;}
+
+/* ── HERO ── */
+#hero { justify-content:flex-end; padding-bottom:12vh; min-height:100vh; }
+.hero-eyebrow { font-family:var(--mono); font-size:9px; letter-spacing:0.28em; color:var(--green); text-transform:uppercase; margin-bottom:1.8rem; opacity:0; animation:fadeUp 1.2s ease 0.3s forwards; }
+.hero-title { font-family:var(--serif); font-size:clamp(3.5rem,9vw,7.5rem); font-weight:300; line-height:0.95; letter-spacing:-0.02em; margin-bottom:1.8rem; opacity:0; animation:fadeUp 1.2s ease 0.5s forwards; }
+.hero-title em { font-style:italic; color:var(--accent); }
+.hero-sub { font-family:var(--serif); font-size:clamp(1rem,2vw,1.35rem); font-style:italic; color:var(--muted); max-width:580px; line-height:1.7; margin-bottom:2.5rem; opacity:0; animation:fadeUp 1.2s ease 0.7s forwards; }
+.cover-meta { display:flex; gap:3rem; flex-wrap:wrap; opacity:0; animation:fadeUp 1.2s ease 0.9s forwards; }
+.meta-item { font-family:var(--mono); font-size:9px; letter-spacing:0.14em; color:rgba(139,172,192,0.4); text-transform:uppercase; }
+.meta-item strong { display:block; font-size:11px; color:rgba(232,244,253,0.7); margin-bottom:2px; font-weight:400; }
+.scroll-hint { position:absolute; bottom:2.5rem; right:3rem; font-family:var(--mono); font-size:8px; letter-spacing:0.2em; color:rgba(139,172,192,0.25); text-transform:uppercase; writing-mode:vertical-rl; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(28px);} to{opacity:1;transform:none;} }
+
+/* ── COMMON SECTION ELEMENTS ── */
+.accent-rule { width:36px; height:2px; border-radius:2px; margin-bottom:1.8rem; }
+.accent-rule.green { background:var(--green); }
+.accent-rule.red { background:var(--red); }
+.accent-rule.gold { background:var(--gold); }
+.accent-rule.blue { background:var(--accent); }
+
+h2.slide-title { font-family:var(--serif); font-size:clamp(2.2rem,4.5vw,3.8rem); font-weight:300; line-height:1.1; margin-bottom:0.4rem; letter-spacing:-0.01em; }
+h2.slide-title em { color:var(--accent); font-style:italic; }
+.slide-subtitle { font-family:var(--serif); font-size:1rem; font-style:italic; color:var(--muted); margin-bottom:2.5rem; font-weight:300; }
+.section-intro { font-family:var(--mono); font-size:0.75rem; line-height:1.85; color:var(--muted); max-width:580px; margin-bottom:1rem; letter-spacing:0.02em; font-weight:300; }
+.helmsian { font-family:var(--serif); font-size:1.05rem; font-style:italic; line-height:1.9; color:var(--muted); max-width:520px; }
+.helmsian strong { color:var(--text); font-style:normal; font-weight:400; }
+.closing { font-family:var(--serif); font-style:italic; font-size:1rem; color:var(--muted); border-top:0.5px solid rgba(79,195,247,0.12); padding-top:1.5rem; margin-top:0.5rem; max-width:720px; }
+
+/* ── LAYOUT ── */
+.two-col { display:grid; grid-template-columns:1fr 1.5fr; gap:5rem; align-items:start; }
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:1.8rem; margin-top:2rem; }
+.grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:1.6rem; margin-top:2rem; }
+.grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:1.4rem; margin-top:2rem; }
+
+/* ── DARK CARDS (existing deck style) ── */
+.card { border:1px solid rgba(79,195,247,0.1); background:rgba(8,13,26,0.65); padding:1.8rem; position:relative; transition:border-color 0.3s; backdrop-filter:blur(4px); }
+.card::before { content:''; position:absolute; top:0; left:0; width:0; height:1px; background:var(--accent); transition:width 0.4s; }
+.card:hover::before { width:100%; }
+.card:hover { border-color:rgba(79,195,247,0.28); }
+.card-num { font-family:var(--mono); font-size:9px; letter-spacing:0.28em; color:var(--accent3); margin-bottom:0.8rem; }
+.card-title { font-family:var(--serif); font-size:1.3rem; font-weight:400; margin-bottom:0.6rem; }
+.card-body { font-family:var(--mono); font-size:0.73rem; line-height:1.75; color:var(--muted); letter-spacing:0.015em; font-weight:300; }
+.card-body em { color:var(--accent); font-style:normal; }
+.card-accent { border-left:2px solid var(--accent2); background:rgba(0,229,255,0.025); border-right:none; border-top:none; border-bottom:none; }
+
+/* ── PROBLEM LAYERS (from uploaded deck, dark-adapted) ── */
+.problem-layer { display:grid; grid-template-columns:2.5rem 1fr auto; gap:1.5rem; padding:1.75rem 0; border-bottom:0.5px solid rgba(79,195,247,0.1); align-items:start; }
+.problem-layer:last-of-type { border-bottom:none; }
+.layer-index { font-family:var(--mono); font-size:9px; color:var(--muted); padding-top:4px; letter-spacing:0.12em; }
+.layer-text h3 { font-family:var(--serif); font-size:1.15rem; font-weight:400; margin-bottom:0.4rem; color:var(--text); }
+.layer-text p { font-family:var(--mono); font-size:0.75rem; color:var(--muted); line-height:1.7; max-width:600px; font-weight:300; }
+.layer-cost { text-align:right; padding-top:2px; min-width:120px; }
+.cost-big { font-family:var(--serif); font-size:1.8rem; font-weight:300; color:var(--red); line-height:1; }
+.cost-sub { font-family:var(--mono); font-size:8px; color:var(--muted); letter-spacing:0.1em; margin-top:3px; }
+
+/* ── EVIDENCE CARDS ── */
+.evidence-trio { display:grid; grid-template-columns:repeat(3,1fr); gap:1.25rem; margin-top:2.5rem; }
+.evidence-card { background:rgba(8,13,26,0.7); border:0.5px solid rgba(79,195,247,0.1); padding:1.25rem; }
+.evidence-card p { font-family:var(--serif); font-size:0.85rem; font-style:italic; color:var(--muted); line-height:1.6; margin-bottom:0.6rem; }
+.evidence-card cite { font-family:var(--mono); font-size:8px; letter-spacing:0.1em; color:rgba(139,172,192,0.4); font-style:normal; text-transform:uppercase; }
+
+/* ── WHY NOW CARDS ── */
+.cards-4 { display:grid; grid-template-columns:repeat(2,1fr); gap:1.25rem; margin-bottom:2.5rem; }
+.why-card { background:rgba(8,13,26,0.65); border:0.5px solid rgba(79,195,247,0.1); padding:1.5rem; position:relative; overflow:hidden; }
+.why-card::before { content:''; position:absolute; top:0; left:0; width:3px; height:100%; background:var(--green); opacity:0; transition:opacity 0.3s; }
+.why-card:hover::before { opacity:1; }
+.why-card h3 { font-family:var(--serif); font-size:1.05rem; font-weight:400; margin-bottom:0.5rem; color:var(--text); }
+.why-card p { font-family:var(--mono); font-size:0.75rem; font-weight:300; color:var(--muted); line-height:1.65; }
+
+/* ── STATS TRIO (why now) ── */
+.stats-trio { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:2rem; }
+.stat-box { text-align:center; padding:1.5rem 1rem; border:0.5px solid rgba(79,195,247,0.1); background:rgba(45,155,107,0.05); }
+.stat-box .big { font-family:var(--serif); font-size:2.6rem; font-weight:300; color:var(--green); line-height:1; margin-bottom:0.4rem; }
+.stat-box .label { font-family:var(--mono); font-size:8px; letter-spacing:0.12em; color:var(--muted); text-transform:uppercase; line-height:1.5; }
+
+/* ── WHY US GRID ── */
+.why-us-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:2rem; }
+.us-block { border-left:2px solid var(--green); padding-left:1.25rem; }
+.us-block h3 { font-family:var(--serif); font-size:1.05rem; font-weight:400; margin-bottom:0.4rem; color:var(--text); }
+.us-block p { font-family:var(--mono); font-size:0.75rem; font-weight:300; color:var(--muted); line-height:1.65; }
+.tags { display:flex; flex-wrap:wrap; gap:1rem; margin-bottom:2.5rem; margin-top:0.5rem; }
+.tag { font-family:var(--mono); font-size:0.72rem; letter-spacing:0.14em; text-transform:uppercase; padding:0.75rem 1.5rem; border:1px solid rgba(45,155,107,0.45); color:var(--green); border-radius:40px; background:rgba(45,155,107,0.08); box-shadow:0 0 18px rgba(45,155,107,0.12), inset 0 0 12px rgba(45,155,107,0.04); transition:background 0.3s, box-shadow 0.3s, border-color 0.3s; cursor:default; }
+.tag:hover { background:rgba(45,155,107,0.16); border-color:rgba(45,155,107,0.75); box-shadow:0 0 28px rgba(45,155,107,0.22), inset 0 0 16px rgba(45,155,107,0.08); }
+
+/* ── STAT BLOCKS (traction/market) ── */
+.stat-block { padding:2rem; border:1px solid rgba(79,195,247,0.1); background:rgba(10,61,98,0.12); position:relative; overflow:hidden; }
+.stat-block::after { content:''; position:absolute; bottom:0; right:0; width:50px; height:50px; border-top:1px solid rgba(79,195,247,0.1); border-left:1px solid rgba(79,195,247,0.1); transform:translate(25px,25px); }
+.stat-num { font-family:var(--serif); font-size:3rem; font-weight:300; color:var(--accent); line-height:1; }
+.stat-label { font-family:var(--mono); font-size:9px; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); margin-top:0.5rem; }
+.stat-sub { font-family:var(--serif); font-size:0.88rem; font-style:italic; color:rgba(139,172,192,0.6); margin-top:0.3rem; }
+
+/* ── CALLOUT ── */
+.callout { border:1px solid rgba(212,175,55,0.2); background:rgba(212,175,55,0.03); padding:2.5rem; position:relative; max-width:820px; margin-top:3rem; }
+.callout::before { content:''; position:absolute; top:-1px; left:0; width:70px; height:1px; background:var(--gold); }
+.callout-text { font-family:var(--serif); font-size:clamp(1.1rem,2vw,1.65rem); font-weight:300; font-style:italic; line-height:1.5; color:var(--text); }
+.callout-attr { font-family:var(--mono); font-size:9px; letter-spacing:0.26em; color:var(--gold); text-transform:uppercase; margin-top:1.2rem; }
+
+/* ── TIMELINE ── */
+.timeline { display:flex; flex-direction:column; margin-top:1.5rem; position:relative; }
+.timeline::before { content:''; position:absolute; left:6px; top:0; bottom:0; width:1px; background:linear-gradient(to bottom,var(--accent),var(--accent3),transparent); opacity:0.22; }
+.tl-item { display:flex; gap:2rem; padding:1.4rem 0 1.4rem 2.5rem; position:relative; }
+.tl-dot { position:absolute; left:0; top:1.9rem; width:12px; height:12px; border:1px solid var(--accent); background:var(--bg); transform:rotate(45deg); }
+.tl-dot.active { background:var(--accent); }
+.tl-year { font-family:var(--mono); font-size:9px; letter-spacing:0.2em; color:var(--accent); min-width:80px; padding-top:0.15rem; }
+.tl-title { font-family:var(--serif); font-size:1.15rem; margin-bottom:0.3rem; color:var(--text); }
+.tl-desc { font-family:var(--mono); font-size:0.72rem; color:var(--muted); line-height:1.6; font-weight:300; }
+
+/* ── RAISE BLOCK ── */
+.raise-block { display:flex; align-items:center; gap:3rem; flex-wrap:wrap; margin-top:3rem; padding:2.5rem; border:1px solid rgba(79,195,247,0.12); background:rgba(10,61,98,0.08); }
+.raise-item { display:flex; flex-direction:column; gap:0.4rem; }
+.raise-val { font-family:var(--serif); font-size:2.5rem; font-weight:300; color:var(--gold); line-height:1; }
+.raise-label { font-family:var(--mono); font-size:8px; letter-spacing:0.26em; text-transform:uppercase; color:var(--muted); }
+.raise-sep { width:1px; height:55px; background:rgba(79,195,247,0.1); }
+
+/* ── PROJ TABLE ── */
+.proj-table { width:100%; border-collapse:collapse; margin-top:2.5rem; font-size:0.72rem; }
+.proj-table th { text-align:left; font-family:var(--mono); font-size:8px; letter-spacing:0.24em; text-transform:uppercase; color:var(--accent); padding:0.8rem 1rem; border-bottom:1px solid rgba(79,195,247,0.15); }
+.proj-table td { font-family:var(--mono); font-size:0.7rem; font-weight:300; padding:1rem; color:var(--muted); border-bottom:1px solid rgba(79,195,247,0.05); vertical-align:top; line-height:1.5; }
+.proj-table td:first-child { color:var(--text); letter-spacing:0.1em; }
+.proj-table tr:hover td { background:rgba(79,195,247,0.02); }
+td.gold-t { color:var(--gold); }
+td.acc-t { color:var(--accent); }
+
+/* ── CLOSE SLIDE ── */
+#close { background:var(--bg); text-align:center; align-items:center; min-height:60vh; border-top:0.5px solid rgba(79,195,247,0.1); }
+#close h2 { font-family:var(--serif); font-size:clamp(2rem,5vw,4rem); font-weight:300; color:var(--text); margin-bottom:1rem; }
+#close .close-sub { font-family:var(--mono); font-size:0.78rem; color:var(--muted); letter-spacing:0.1em; margin-bottom:3rem; }
+#close .contact-line { font-family:var(--mono); font-size:0.85rem; color:var(--green); letter-spacing:0.12em; }
+
+@media(max-width:800px) {
+  .slide { padding:6rem 6vw 5rem; }
+  .two-col,.grid-2,.grid-3,.grid-4,.cards-4,.why-us-grid,.stats-trio,.evidence-trio { grid-template-columns:1fr; }
+  .raise-block { flex-direction:column; gap:2rem; }
+  .raise-sep { width:60px; height:1px; }
+  .problem-layer { grid-template-columns:2rem 1fr; }
+  .layer-cost { display:none; }
+  .flow-phrase-text { font-size:0.75rem; white-space:normal; text-align:center; }
+}
+</style>
+</head>
+<body>
+
+<div id="scroll-progress"></div>
+<canvas id="fractal-canvas"></canvas>
+<div class="fluid-blob blob1"></div>
+<div class="fluid-blob blob2"></div>
+<div class="fluid-blob blob3"></div>
+
+<nav>
+  <div class="logo">MHS · Mobley Helms Systems</div>
+  <ul class="nav-links">
+    <li><a href="#problem">Problem</a></li>
+    <li><a href="#why-now">Why Now</a></li>
+    <li><a href="#why-us">Why Us</a></li>
+    <li><a href="#traction">Traction</a></li>
+    <li><a href="#ask">Seed Round</a></li>
+  </ul>
+  <div class="round-badge">Seed 2026</div>
+</nav>
+
+<!-- ════════════════════════════════ -->
+<!-- 01  HERO -->
+<!-- ════════════════════════════════ -->
+<style>
+.hero-eyebrow { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.42em; color: var(--accent); text-transform: uppercase; margin-bottom: 2rem; opacity: 0; animation: fadeUp 1.2s ease 0.3s forwards; }
+.hero-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(3.5rem, 9vw, 7.5rem); font-weight: 300; line-height: 0.95; letter-spacing: -0.02em; margin-bottom: 2rem; opacity: 0; animation: fadeUp 1.2s ease 0.5s forwards; }
+.hero-title em { font-style: italic; color: var(--accent); }
+.hero-sub { font-family: 'Cormorant Garamond', serif; font-size: clamp(1rem, 2.2vw, 1.4rem); font-style: italic; color: var(--muted); max-width: 620px; line-height: 1.7; margin-bottom: 2.5rem; opacity: 0; animation: fadeUp 1.2s ease 0.7s forwards; }
+.hero-thesis { font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.18em; color: var(--accent2); opacity: 0; animation: fadeUp 1.2s ease 0.9s forwards; border-left: 2px solid var(--accent2); padding-left: 1rem; line-height: 1.8; max-width: 560px; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+<section class="slide" id="hero">
+  <div class="bg-word" style="right:-4vw;top:8vh;">TIME</div>
+  <div class="hero-eyebrow">Intelligence as a Service · Seed Round 2026</div>
+  <h1 class="hero-title">We return<br><em>time.</em></h1>
+  <p class="hero-sub">The only resource that cannot be created — and the one resource every person, every trade, every business runs out of first. We give it back.</p>
+
+</section>
+
+<div class="fractal-divider"></div>
+
+<!-- ════════════════════════════════ -->
+<!-- 02  MISSION / ALIGNMENT -->
+<!-- ════════════════════════════════ -->
+<section class="slide" id="mission">
+  <div class="bg-word" style="left:-3vw;bottom:-6vh;">ALIGN</div>
+  <div class="slide-num reveal"><span>02</span> North Star</div>
+  <div class="accent-rule blue reveal d1"></div>
+  <h2 class="slide-title reveal d1">Enhance the humans<br>that make work <em>meaningful.</em></h2>
+  <p class="slide-subtitle reveal d2">AI-agnostic automation. One configuration change at a time.</p>
+  <div class="helmsian reveal d2" style="margin-bottom:2rem;">
+    Mobley Helms Systems builds automation that collapses days of skilled work into minutes — without replacing the humans who make it meaningful. Our platform meets <strong>any process, any industry, any scale.</strong>
+    We return time to the people who know best how to use it.
+  </div>
+  <div class="callout reveal d3">
+    <div class="callout-text">Everything we do can be distilled into one thesis: alignment. As AI systems grow more capable, ensuring sustainable, viable systems for all life entering this era is not optional — it is the work.</div>
+    <div class="callout-attr">— Core Alignment Principle · Mobley Helms Systems</div>
+  </div>
+</section>
+
+<div class="flow-phrase">
+  <div class="flow-phrase-line"></div>
+  <div class="flow-phrase-text">Geometric reasoning creates digital intelligence.</div>
+  <div class="flow-phrase-line r"></div>
+</div>
+
+<!-- ════════════════════════════════ -->
+<!-- 03  PROBLEM -->
+<!-- ════════════════════════════════ -->
+<section class="slide" id="problem">
+  <div class="bg-word" style="right:-4vw;top:6vh;opacity:0.018;">COST</div>
+  <div class="slide-num reveal"><span>03</span> The Problem</div>
+  <div class="accent-rule red reveal d1"></div>
+  <h2 class="slide-title reveal d1">Every industry loses time<br>the same way.</h2>
+  <p class="slide-subtitle reveal d2">Every process step compounds the cost.</p>
+
+  <div class="problem-layer reveal d2">
+    <div class="layer-index">01</div>
+    <div class="layer-text">
+      <h3>Skilled work buried in manual document cycles</h3>
+      <p>Estimators, project managers, and case workers spend the majority of their time producing, formatting, and submitting documents — not applying their expertise. A standard construction submittal: 8–24 hours. Complex jobs: three days. This is the norm across every trade, every industry.</p>
+    </div>
+    <div class="layer-cost">
+      <div class="cost-big">$7,200</div>
+      <div class="cost-sub">per submittal, per firm</div>
+    </div>
+  </div>
+
+  <div class="problem-layer reveal d3">
+    <div class="layer-index">02</div>
+    <div class="layer-text">
+      <h3>Generic AI tools create new costs without solving old ones</h3>
+      <p>Off-the-shelf AI requires constant prompt engineering, model upgrades, and token budget management — per task, per person, restarting each cycle. Diminishing returns compound. The tool designed to save time now consumes it.</p>
+    </div>
+    <div class="layer-cost">
+      <div class="cost-big">∞</div>
+      <div class="cost-sub">recurring rework cost</div>
+    </div>
+  </div>
+
+  <div class="problem-layer reveal d4">
+    <div class="layer-index">03</div>
+    <div class="layer-text">
+      <h3>No one owns their own process intelligence</h3>
+      <p>Every workflow built on a proprietary platform belongs to that platform. When the vendor raises prices, changes the model, or discontinues the product — the expertise evaporates. Businesses pay to use their own knowledge on someone else's infrastructure.</p>
+    </div>
+    <div class="layer-cost">
+      <div class="cost-big">0%</div>
+      <div class="cost-sub">sovereignty retained</div>
+    </div>
+  </div>
+
+  <div class="evidence-trio reveal d5" style="grid-template-columns:1fr; max-width:480px;">
+    <div class="evidence-card">
+      <p>"It currently takes Andrew one day, eight hours, to produce a standard submittal. Complex jobs can take up to three days."</p>
+      <cite>Precision Auto Doors — live customer, 2025</cite>
+    </div>
+  </div>
+
+  <p class="closing reveal d5">The problem isn't effort. It's architecture. Every industry is running the same broken pattern.</p>
+</section>
+
+<div class="flow-phrase">
+  <div class="flow-phrase-line"></div>
+  <div class="flow-phrase-text">Complexity falls away as capability expands.</div>
+  <div class="flow-phrase-line r"></div>
+</div>
+
+<!-- ════════════════════════════════ -->
+<!-- 04  WHY NOW + MARKET -->
+<!-- ════════════════════════════════ -->
+<section class="slide" id="why-now">
+  <div class="bg-word" style="left:-3vw;top:5vh;opacity:0.018;">SCALE</div>
+  <div class="slide-num reveal"><span>04</span> Why Now</div>
+  <div class="accent-rule green reveal d1"></div>
+  <h2 class="slide-title reveal d1">The window is open.</h2>
+  <p class="slide-subtitle reveal d2">Three forces converging — and a brief moment to own the intersection.</p>
+
+  <div class="cards-4 reveal d2">
+    <div class="why-card">
+      <h3>Model capability crossed the threshold</h3>
+      <p>LLMs can now read, reason, and respond across complex documents. Two years ago this prototype wasn't possible. Today it ships in weeks.</p>
+    </div>
+    <div class="why-card">
+      <h3>Time is the last unoptimized resource</h3>
+      <p>The firms that reclaim time first compound the advantage. Followers pay a permanent efficiency tax that grows every quarter they wait.</p>
+    </div>
+    <div class="why-card">
+      <h3>AI adoption is enterprise-mainstream</h3>
+      <p>Buyers are no longer skeptical of AI tools — they're skeptical of being left behind. The question shifted from "should we?" to "which one?"</p>
+    </div>
+    <div class="why-card">
+      <h3>Sector-specific platforms are unbuilt</h3>
+      <p>Generic AI tools exist. Sector-specific automation — built around actual workflows, compliance requirements, and operational realities of for-profit, non-profit, and government organizations — does not. That gap is the opportunity.</p>
+    </div>
+  </div>
+
+  <div class="stats-trio reveal d3">
+    <div class="stat-box">
+      <div class="big">95%</div>
+      <div class="label">time savings validated in live use</div>
+    </div>
+    <div class="stat-box">
+      <div class="big">3</div>
+      <div class="label">industries deployed — pre-seed complete</div>
+    </div>
+    <div class="stat-box">
+      <div class="big">$25k</div>
+      <div class="label">total cost to proof of market fit</div>
+    </div>
+  </div>
+
+  <p class="closing reveal d4">Readiness preceded the moment. The moment has arrived. The only remaining variable is capital.</p>
+
+  <div style="margin-top:4rem; padding-top:3rem; border-top:0.5px solid rgba(79,195,247,0.1);">
+    <div class="slide-num reveal" style="margin-bottom:1.5rem;"><span>↳</span> Market Opportunity</div>
+    <h2 class="slide-title reveal d1">Fragmented. Underserved.<br><em>Scale-ready.</em></h2>
+    <p class="section-intro reveal d2" style="margin-bottom:2rem;">Time savings is the universal metric. Any organization — for-profit, non-profit, or government — with skilled repetitive documentation is a target. Construction alone represents a $90–144B opportunity. The three-sector model multiplies that.</p>
+
+    <div class="grid-3">
+      <div class="stat-block reveal d1">
+        <div class="stat-num">25K</div>
+        <div class="stat-label">Existing Emullion contractors</div>
+        <div class="stat-sub">$4K/month — hardware bottleneck Weyland eliminates</div>
+      </div>
+      <div class="stat-block reveal d2">
+        <div class="stat-num">500K</div>
+        <div class="stat-label">Addressable for-profit users</div>
+        <div class="stat-sub">At $2K/month — 10% penetration = 50K users in 3 years. Non-profit and government are additive.</div>
+      </div>
+      <div class="stat-block reveal d3">
+        <div class="stat-num">$1.2B+</div>
+        <div class="stat-label">ARR at 10% penetration</div>
+        <div class="stat-sub">For-profit vertical alone. Non-profit and government sectors multiply the ceiling.</div>
+      </div>
+    </div>
+
+
+  </div>
+</section>
+
+<div class="fractal-divider"></div>
+
+
+<!-- ════════════════════════════════ -->
+<!-- 05  OUR SOLUTION -->
+<!-- ════════════════════════════════ -->
+<section class="slide" id="solution">
+  <div class="bg-word" style="right:-4vw;bottom:-5vh;opacity:0.018;">FLOW</div>
+  <div class="slide-num reveal"><span>05</span> Our Solution</div>
+  <div class="accent-rule blue reveal d1"></div>
+  <h2 class="slide-title reveal d1">One configuration.<br><em>Any intelligence.</em></h2>
+  <p class="slide-subtitle reveal d2">Runs on commercially available technology. One config change to switch models, forever.</p>
+
+  <div class="grid-3">
+    <div class="card card-accent reveal d1">
+      <div class="card-num">FOR-PROFIT</div>
+      <div class="card-title">Operations & Change Management</div>
+      <div class="card-body">Document automation, submittal processing, estimating, and compliance workflows. Same engine serving construction, sporting events, and any industry where skilled labor drowns in paperwork.<br><br><em>Weyland · Link · Any workflow that costs time.</em></div>
+    </div>
+    <div class="card card-accent reveal d2">
+      <div class="card-num">NON-PROFIT</div>
+      <div class="card-title">Veterans Services & Intake</div>
+      <div class="card-body">Case processing, service intake, and documentation for organizations that operate on mission rather than margin. The same automation stack that serves construction now serves veterans — same tool, zero re-engineering.<br><br><em>Weyland for Veterans · LAMVA deployment · July 2026.</em></div>
+    </div>
+    <div class="card card-accent reveal d3">
+      <div class="card-num">GOVERNMENT</div>
+      <div class="card-title">Public Sector Document Intelligence</div>
+      <div class="card-body">Compliance-heavy, document-intensive, and chronically understaffed. Government agencies face the same problem every private firm does — skilled people buried in process. Weyland doesn't care what sector it's serving.<br><br><em>LA County VA Office demo · Q3 2026 pipeline.</em></div>
+    </div>
+  </div>
+
+  <div class="callout reveal d3">
+    <div class="callout-text">"Whatever we've built for one customer, we can build for any customer in any industry. The stack is constant. The vertical is the variable."</div>
+    <div class="callout-attr">— Core Platform Principle · Mobley Helms Systems</div>
+  </div>
+
+  <p class="closing reveal d4">Built on Mobley Functions — proprietary abstraction across any LLM backend. AI-agnostic by design. The model changes. Your workflow doesn't. Apple experience. Google flexibility. Owned entirely by the operator.</p>
+</section>
+
+<div class="fractal-divider"></div>
+
+<!-- ════════════════════════════════ -->
+<!-- 07  TRACTION -->
+<!-- ════════════════════════════════ -->
+<section class="slide" id="traction">
+  <div class="slide-num reveal"><span>07</span> Proof of Work</div>
+  <div class="accent-rule green reveal d1"></div>
+  <h2 class="slide-title reveal d1">Proof of work.<br>Customer-deployed.<br><em>Three sectors.</em></h2>
+  <p class="section-intro reveal d2" style="margin-bottom:2rem;">$25,000 total pre-seed spend.<br>Idea to live deployment across for-profit, non-profit, and government-adjacent verticals.<br>Product-market fit confirmed across 3 industries.<br>Athena operational March 2025. Operating cost under $400/month.</p>
+
+  <div class="grid-4">
+    <div class="stat-block reveal d1">
+      <div class="stat-num">80–95%</div>
+      <div class="stat-label">Time reduction per task</div>
+      <div class="stat-sub">Conservative. Understates the potential.</div>
+    </div>
+    <div class="stat-block reveal d2">
+      <div class="stat-num">3</div>
+      <div class="stat-label">Sectors deployed</div>
+      <div class="stat-sub">For-profit · Non-profit · Government</div>
+    </div>
+    <div class="stat-block reveal d3">
+      <div class="stat-num">8</div>
+      <div class="stat-label">Customer demos</div>
+      <div class="stat-sub">Angel investor validated</div>
+    </div>
+    <div class="stat-block reveal d4">
+      <div class="stat-num">&lt;$400</div>
+      <div class="stat-label">Monthly operating cost</div>
+      <div class="stat-sub">Runs on commercial infrastructure</div>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-top:2rem;">
+    <div class="card reveal d1">
+      <div class="card-num">WEYLAND PLATFORM — FOR-PROFIT · CONSTRUCTION</div>
+      <div class="card-title">Precision Auto Doors</div>
+      <div class="card-body">Standard submittal: 1–3 days. Weyland: minutes. Uses publicly available information to bypass the bottleneck entirely — no proprietary data required.<br><br><em>25,000 existing contractors on Emullion at $4K/month — hardware-constrained. Weyland eliminates that constraint.</em><br><br>Angel investor: Andrew Miller.</div>
+    </div>
+    <div class="card reveal d2">
+      <div class="card-num">LINK PLATFORM — FOR-PROFIT · EVENTS</div>
+      <div class="card-title">Golf Tournament Management</div>
+      <div class="card-body">Pairings and logistics: weeks of manual effort. Link: hours. JotForm intake → codified database → reproducible methodology.<br><br><em>Built for $200. Quoted at $2,000. Delivered in days.</em><br><br>Expandable to any event-based workflow.</div>
+    </div>
+    <div class="card reveal d3">
+      <div class="card-num">WEYLAND PLATFORM — NON-PROFIT · VETERANS SERVICES</div>
+      <div class="card-title">LAMVA — July 18, Bob Hope Freedom Hall</div>
+      <div class="card-body">The LA Military Veterans Association is bringing Weyland into its service delivery infrastructure — applying the same document automation engine that serves construction to veterans case processing and intake.<br><br><em>Same platform. Different sector. This is the thesis made real: one stack, any industry.</em><br><br>Demo event: July 18, 2026 · Downtown Los Angeles.</div>
+    </div>
+    <div class="card reveal d4">
+      <div class="card-num">LINK PLATFORM — FOR-PROFIT · SPORTING EVENTS</div>
+      <div class="card-title">Powerhaus — Reggie Grant (NFL)</div>
+      <div class="card-body">Powerhaus uses sporting events as business development. MHS is in active conversations to deploy the Link platform across their NFL-network event roster — bringing the same event automation that runs golf tournaments to professional sports BD operations.<br><br><em>Relationship initiated. Pipeline active.</em></div>
+    </div>
+  </div>
+</section>
+
+<div class="flow-phrase">
+  <div class="flow-phrase-line"></div>
+  <div class="flow-phrase-text">Same stack. Any sector. The variable is the vertical — the constant is the capability.</div>
+  <div class="flow-phrase-line r"></div>
+</div>
+
+
+
+<!-- ════════════════════════════════ -->
+<!-- 09  PROJECTED BOOKINGS -->
+<!-- ════════════════════════════════ -->
+<section class="slide" id="bookings">
+  <div class="slide-num reveal"><span>09</span> Projected Bookings</div>
+  <div class="accent-rule gold reveal d1"></div>
+  <h2 class="slide-title reveal d1">Timeline to <em>ROI.</em></h2>
+  <p class="section-intro reveal d2" style="margin-bottom:0.5rem;">Clear milestones. Measurable metrics. Repayment of initial investment targeted in Year 2 — unlocking mutual returns as business performance grows.</p>
+
+  <table class="proj-table reveal d2">
+    <thead>
+      <tr><th>Period</th><th>Milestone</th><th>Metric</th><th>Significance</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Q3 2026</td><td>LAMVA — Veterans Services, Bob Hope Freedom Hall</td><td class="acc-t">Weyland — non-profit vertical</td><td>Proves platform serves beyond for-profit. Public sector + mission-driven orgs become addressable.</td></tr>
+      <tr><td>Q3 2026</td><td>LA County VA Office system demo</td><td class="acc-t">Weyland — government vertical</td><td>Cross-sector viability demonstrated. Public sector pathway opens.</td></tr>
+      <tr><td>Q3 2026</td><td>Customers 2–10, Weyland / Construction</td><td class="acc-t">For-profit expansion</td><td>Scaling from 1 customer to portfolio. Replication speed proven.</td></tr>
+      <tr><td>Q4 2026</td><td>Link Operations Platform — multi-customer</td><td class="acc-t">Events & sporting vertical scales</td><td>Powerhaus / NFL network. Second platform grows. Cross-sector strategy validated.</td></tr>
+      <tr><td>Year 2</td><td>Go-to-market team operational</td><td class="gold-t">Revenue stream unlocks repayment</td><td>Performance-based mutual return model activates.</td></tr>
+      <tr><td>Year 3</td><td>50,000 users across for-profit, non-profit, government</td><td class="gold-t">$1.2B ARR trajectory</td><td>10% penetration across addressable verticals. Construction alone justifies the number; the other sectors multiply it.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<div class="flow-phrase">
+  <div class="flow-phrase-line"></div>
+  <div class="flow-phrase-text">All paths converge here. Every need answered by the same elegant truth.</div>
+  <div class="flow-phrase-line r"></div>
+</div>
+
+<!-- ════════════════════════════════ -->
+<!-- 10  THE ASK -->
+<!-- ════════════════════════════════ -->
+<section class="slide" id="ask">
+  <div class="bg-word" style="right:-4vw;top:5vh;opacity:0.02;">SEED</div>
+  <div class="slide-num reveal"><span>10</span> The Ask</div>
+  <div class="accent-rule gold reveal d1"></div>
+  <h2 class="slide-title reveal d1">Seed Round. <em>2026.</em></h2>
+
+  <div class="raise-block reveal d2">
+    <div class="raise-item"><div class="raise-val">$500K</div><div class="raise-label">Minimum raise</div></div>
+    <div class="raise-sep"></div>
+    <div class="raise-item"><div class="raise-val">$2.5M</div><div class="raise-label">Target raise</div></div>
+    <div class="raise-sep"></div>
+    <div class="raise-item"><div class="raise-val">5 Yrs</div><div class="raise-label">$10M = full operational runway</div></div>
+    <div class="raise-sep"></div>
+    <div class="raise-item"><div class="raise-val">60/30/10</div><div class="raise-label">Engineering / Staffing / Ops</div></div>
+  </div>
+
+  <div class="grid-2" style="margin-top:2rem; max-width:860px;">
+    <div class="card reveal d1">
+      <div class="card-num">HIRING PLAN</div>
+      <div class="card-title">3–5 headcount</div>
+      <div class="card-body">Chief of Staff · Head of Engineering · Legal/HR · Customer Success.<br><br>Go-to-market team rounds out capability to deliver at scale.</div>
+    </div>
+    <div class="card reveal d2">
+      <div class="card-num">REPAYMENT MODEL</div>
+      <div class="card-title">Year 2 target repayment</div>
+      <div class="card-body">Revenue milestones unlock investor repayment on a performance schedule. Certain metrics at certain times. Mutual success: as the business performs, everyone benefits.<br><br><em>$10M capital investment = 5 years full operational runway.</em></div>
+    </div>
+  </div>
+
+  <div class="callout reveal d3">
+    <div class="callout-text">"Whatever your business does — we save 95% on time to target. That is conservative. That understates the potential."</div>
+    <div class="callout-attr">— Ron Helms, Founder</div>
+  </div>
+</section>
+
+<div class="fractal-divider"></div>
+
+<!-- ════════════════════════════════ -->
+<!-- 08  WHY MHS / COMPETITIVE FRAME -->
+<!-- ════════════════════════════════ -->
+<section class="slide" id="why-us">
+  <div class="bg-word" style="left:-3vw;top:5vh;opacity:0.018;">SOVEREIGN</div>
+  <div class="slide-num reveal"><span>08</span> Why MHS</div>
+  <div class="accent-rule blue reveal d1"></div>
+  <h2 class="slide-title reveal d1">We build what they can't.<br><em>What they won't.</em></h2>
+  <p class="slide-subtitle reveal d2">Digital intelligence — not artificial intelligence. The distinction is the business.</p>
+
+  <div class="tags reveal d2">
+    <span class="tag">AI-agnostic architecture</span>
+    <span class="tag">Persistent cognitive agency</span>
+    <span class="tag">Sovereign inference</span>
+    <span class="tag">Digital intelligence</span>
+    <span class="tag">Human-in-the-loop governance</span>
+    <span class="tag">Geometric reasoning</span>
+  </div>
+
+  <div class="why-us-grid reveal d3">
+    <div class="us-block">
+      <h3>The providers need your inference</h3>
+      <p>Every major AI platform runs your work through their infrastructure, trained on knowledge they didn't create. When you don't own your inference layer, your expertise compounds their value — not yours. If you don't get the choice, you are the product.</p>
+    </div>
+    <div class="us-block">
+      <h3>MHS builds sovereign stacks</h3>
+      <p>Persistent cognitive agency. Your process intelligence lives inside your stack, not theirs. Modern AI agents are stateless — every session starts fresh with no memory. MHS builds systems that carry expertise forward. That is the difference between a tool and an infrastructure.</p>
+    </div>
+  </div>
+
+  <div class="callout reveal d4">
+    <div class="callout-text">"For less than a year of your subscription cost, we can build your own stack. Your knowledge. Your infrastructure. Your future."</div>
+    <div class="callout-attr">— Ron Helms, Founder · Mobley Helms Systems</div>
+  </div>
+</section>
+
+<div class="flow-phrase">
+  <div class="flow-phrase-line"></div>
+  <div class="flow-phrase-text">Every layer from the common — deep tech, first principles, sovereign stack.</div>
+  <div class="flow-phrase-line r"></div>
+</div>
+
+
+<section class="slide" id="technology">
+  <div class="bg-word" style="left:-2vw;top:6vh;opacity:0.018;">DEEP</div>
+  <div class="slide-num reveal"><span>11</span> Technology</div>
+  <div class="accent-rule blue reveal d1"></div>
+  <div class="two-col">
+    <div>
+      <h2 class="slide-title reveal d1">Built from first principles.<br><em>Not a playbook.</em></h2>
+      <div class="helmsian reveal d2" style="margin-top:1.5rem;">
+        <strong>Mobley Functions</strong> — novel mathematical architecture for real-time decision automation. Governance frameworks that define how the system behaves and presents — the infrastructure layer between you and the model.<br><br>
+        Post-LLM. Not prompt engineering. <em>Intelligence infrastructure.</em>
+      </div>
+    </div>
+    <div class="timeline reveal d2">
+      <div class="tl-item">
+        <div class="tl-dot active"></div>
+        <div class="tl-year">Mar 2025</div>
+        <div><div class="tl-title">Athena Operational</div><div class="tl-desc">Powershell-based AI agent on Anthropic API goes live. First proof that AI-agnostic automation is not only possible — but the only future-proof architecture. Eight demo sessions. Three industries. $25K total spend.</div></div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot active"></div>
+        <div class="tl-year">Dec 2025</div>
+        <div><div class="tl-title">Weyland Platform</div><div class="tl-desc">Document automation — first for-profit deployment in construction. Live with Precision Auto Doors. Pre-seed closed. Angel investor committed.</div></div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot active"></div>
+        <div class="tl-year">Dec 2025</div>
+        <div><div class="tl-title">Link Platform</div><div class="tl-desc">Event management automation. Second industry validated. Pencil-and-paper replaced by codified, replicable methodology.</div></div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-year">2026 →</div>
+        <div><div class="tl-title">Seed · Scale · Three Sectors</div><div class="tl-desc">Seed round opens. LAMVA veterans services deployment (July 18 · Bob Hope Freedom Hall). LA County VA Office demo pipeline. Powerhaus / Reggie Grant sporting events BD. Deep-edge frontier buildout.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="fractal-divider"></div>
+
+<!-- ════════════════════════════════ -->
+<!-- 12  FOUNDERS -->
+<!-- ════════════════════════════════ -->
+<section class="slide" id="team">
+  <div class="slide-num reveal"><span>12</span> Founders</div>
+  <div class="accent-rule blue reveal d1"></div>
+  <h2 class="slide-title reveal d1">Two builders. <em>One thesis.</em></h2>
+  <div class="grid-2" style="max-width:960px; margin-top:2rem;">
+    <div class="card reveal d1">
+      <div class="card-num">FOUNDER · CHIEF ALIGNMENT OFFICER</div>
+      <div class="card-title">Ron Helms</div>
+      <div class="card-body">Builder of real-world proof. Architect of the Helmsian cognitive framework and the Athena AI system. Drives vision, product, and strategic partnerships.<br><br>Deep expertise in AI–human communication systems and recursive intelligence design. Specialist in alignment and integration — the governance layer between human intelligence and AI infrastructure.<br><br><em>Motivated by a singular conviction: every person deserves systems that work for them — not the other way around.</em></div>
+    </div>
+    <div class="card reveal d2">
+      <div class="card-num">CO-FOUNDER · SYSTEMS ARCHITECT</div>
+      <div class="card-title">John Alexander Mobley</div>
+      <div class="card-body">Frontier physicist whose framework rewires how systems think. His models are the intellectual spine of Mobley Helms Systems.<br><br>Architect of recursive intelligence. Author of the Mobley Functions — novel mathematical architecture for real-time decision automation. Frontier physics frameworks form the brain of the AI.<br><br><em>Where others see tools, John sees physics. Where others see AI, he sees a new substrate for intelligence.</em></div>
+    </div>
+  </div>
+
+</section>
+
+<!-- ════════════════════════════════ -->
+<!-- 13  CLOSE -->
+<!-- ════════════════════════════════ -->
+<section class="slide" id="close">
+  <h2 class="reveal d1">What was possible<br>became real.</h2>
+  <p class="close-sub reveal d2">What is real now awaits only alignment.</p>
+  <div class="contact-line reveal d3">Mobley Helms Systems · Seed Round 2026</div>
+  <p class="reveal d4" style="font-family:var(--serif); font-style:italic; font-size:clamp(0.9rem,1.6vw,1.1rem); color:var(--muted); max-width:600px; margin-top:2rem; line-height:1.8;">We return time. We build sovereign stacks. This is digital intelligence.<br><br>The choice is yours. Always yours.</p>
+</section>
+
+<script>
+const prog = document.getElementById('scroll-progress');
+window.addEventListener('scroll', () => {
+  prog.style.width = (window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100) + '%';
+});
+
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+}, { threshold: 0.12 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── FRACTAL CANVAS (Julia set + flowing particle web from uploaded deck) ──
+const canvas = document.getElementById('fractal-canvas');
+const ctx = canvas.getContext('2d');
+let W, H, t = 0;
+const nodes = [];
+const NODE_COUNT = 55;
+
+function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+function initNodes() {
+  nodes.length = 0;
+  for (let i = 0; i < NODE_COUNT; i++) {
+    nodes.push({ x: Math.random()*W, y: Math.random()*H, vx:(Math.random()-0.5)*0.3, vy:(Math.random()-0.5)*0.3, r:1.2+Math.random()*2, phase:Math.random()*Math.PI*2, freq:0.0006+Math.random()*0.0008 });
+  }
+}
+function getScrollFrac() { const m = document.body.scrollHeight - window.innerHeight; return m > 0 ? window.scrollY / m : 0; }
+
+function draw() {
+  t++;
+  const sf = getScrollFrac();
+  ctx.clearRect(0, 0, W, H);
+
+  // Julia set background
+  const cx = -0.7 + 0.018 * Math.sin(t * 0.0022);
+  const cy = 0.27 + 0.018 * Math.cos(t * 0.0016);
+  const scale = Math.min(W, H) * 0.34;
+  const maxIter = 50;
+  const step = 5;
+  for (let px = 0; px < W; px += step) {
+    for (let py = 0; py < H; py += step) {
+      let x = (px-W/2)/scale, y = (py-H/2)/scale, i = 0;
+      while (x*x+y*y < 4 && i < maxIter) { let xn=x*x-y*y+cx; y=2*x*y+cy; x=xn; i++; }
+      if (i < maxIter) {
+        const b = i / maxIter;
+        ctx.fillStyle = `rgba(${Math.floor(b*10)},${Math.floor(b*65+15)},${Math.floor(b*155+50)},${b*0.5})`;
+        ctx.fillRect(px, py, step, step);
+      }
+    }
+  }
+
+  // Organic ink blobs (from uploaded deck)
+  for (let b = 0; b < 3; b++) {
+    const bx = W*(0.15+b*0.35), by = H*(0.3+Math.sin(t*0.0005+b*2.1)*0.2);
+    const baseR = 100+b*50+sf*140, petals = 5+b*2;
+    const morphAmt = 0.25+sf*0.3;
+    ctx.beginPath();
+    for (let a = 0; a <= Math.PI*2; a += 0.03) {
+      const fn = Math.sin(a*petals+t*0.001)*morphAmt + Math.sin(a*(petals+2)+t*0.0017)*morphAmt*0.5;
+      const r = baseR*(1+fn);
+      const px = bx+Math.cos(a+sf*Math.PI*0.5)*r, py = by+Math.sin(a+sf*Math.PI*0.5)*r;
+      a === 0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
+    }
+    ctx.closePath();
+    const al = 0.022+b*0.01-sf*0.006;
+    ctx.fillStyle = b===0 ? `rgba(79,195,247,${al})` : b===1 ? `rgba(124,77,255,${al*0.7})` : `rgba(45,155,107,${al*0.6})`;
+    ctx.fill();
+  }
+
+  // Particle web
+  for (let i = 0; i < nodes.length; i++) {
+    const n = nodes[i];
+    n.x += n.vx + Math.sin(t*n.freq+n.phase)*0.35;
+    n.y += n.vy + Math.cos(t*n.freq*1.3+n.phase)*0.28 - sf*0.12;
+    if (n.x < 0) n.x = W; if (n.x > W) n.x = 0;
+    if (n.y < 0) n.y = H; if (n.y > H) n.y = 0;
+    for (let j = i+1; j < nodes.length; j++) {
+      const m = nodes[j], dx=n.x-m.x, dy=n.y-m.y, dist=Math.sqrt(dx*dx+dy*dy);
+      const maxD = 100+sf*50;
+      if (dist < maxD) {
+        ctx.beginPath(); ctx.moveTo(n.x,n.y); ctx.lineTo(m.x,m.y);
+        ctx.strokeStyle = `rgba(79,195,247,${(1-dist/maxD)*0.07})`; ctx.lineWidth=0.5; ctx.stroke();
+      }
+    }
+    const pulse = 0.7+Math.sin(t*n.freq*4+n.phase)*0.3;
+    ctx.beginPath(); ctx.arc(n.x,n.y,n.r*pulse,0,Math.PI*2);
+    ctx.fillStyle='rgba(79,195,247,0.14)'; ctx.fill();
+  }
+
+  // Scroll-triggered radiating lines
+  if (sf > 0.05) {
+    const cx2=W*0.5, cy2=H*0.5, lc=Math.floor(sf*20);
+    for (let l=0; l<lc; l++) {
+      const angle=(l/lc)*Math.PI*2+t*0.0007;
+      const len=50+sf*200+Math.sin(t*0.002+l)*25;
+      ctx.beginPath(); ctx.moveTo(cx2,cy2);
+      ctx.lineTo(cx2+Math.cos(angle)*len,cy2+Math.sin(angle)*len);
+      ctx.strokeStyle=`rgba(79,195,247,${0.03+sf*0.05})`; ctx.lineWidth=0.5; ctx.stroke();
+    }
+  }
+
+  requestAnimationFrame(draw);
+}
+
+window.addEventListener('resize', () => { resize(); initNodes(); });
+resize(); initNodes(); draw();
+</script>
+</body>
+</html>
+
